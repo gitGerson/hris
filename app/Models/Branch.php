@@ -22,6 +22,16 @@ class Branch extends Model
     use HasFactory, LogsActivity, SoftDeletes;
 
     /**
+     * Single company install, so a branch always belongs to the operating company.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (Branch $branch): void {
+            $branch->company_id ??= Company::current()->id;
+        });
+    }
+
+    /**
      * Master data, so every change is worth an audit trail.
      */
     public function getActivitylogOptions(): LogOptions

@@ -19,12 +19,6 @@ class BranchForm
                 Section::make('Identity')
                     ->columns(2)
                     ->schema([
-                        Select::make('company_id')
-                            ->label('Company')
-                            ->relationship('company', 'name')
-                            ->searchable()
-                            ->preload()
-                            ->required(),
                         Select::make('type')
                             ->options([
                                 'head_office' => 'Head office',

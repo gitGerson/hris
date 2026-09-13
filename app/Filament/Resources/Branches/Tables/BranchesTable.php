@@ -27,11 +27,6 @@ class BranchesTable
                 TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('company.name')
-                    ->label('Company')
-                    ->searchable()
-                    ->sortable()
-                    ->toggleable(),
                 TextColumn::make('type')
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => str($state)->headline()->toString()),
@@ -63,11 +58,6 @@ class BranchesTable
             ])
             ->defaultSort('code')
             ->filters([
-                SelectFilter::make('company_id')
-                    ->label('Company')
-                    ->relationship('company', 'name')
-                    ->searchable()
-                    ->preload(),
                 SelectFilter::make('type')
                     ->options([
                         'head_office' => 'Head office',

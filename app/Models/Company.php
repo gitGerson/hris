@@ -32,6 +32,17 @@ class Company extends Model
     }
 
     /**
+     * The operating company. This install is single company, so there is one row.
+     */
+    public static function current(): self
+    {
+        return static::query()->oldest('id')->firstOrCreate(
+            ['code' => 'RR'],
+            ['name' => config('app.name'), 'country' => 'ID', 'is_active' => true],
+        );
+    }
+
+    /**
      * @return HasMany<Branch, $this>
      */
     public function branches(): HasMany
