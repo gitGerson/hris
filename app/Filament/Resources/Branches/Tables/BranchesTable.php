@@ -62,6 +62,11 @@ class BranchesTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('code')
+            /** Keep the user's view between visits. */
+            ->persistFiltersInSession()
+            ->persistSearchInSession()
+            ->persistSortInSession()
+            ->persistColumnsInSession()
             ->filters([
                 SelectFilter::make('type')
                     ->options([
@@ -71,7 +76,9 @@ class BranchesTable
                         'production' => 'Production',
                     ]),
                 TernaryFilter::make('is_active')
-                    ->label('Status'),
+                    ->label('Status')
+                    ->trueLabel('Active')
+                    ->falseLabel('Inactive'),
                 TrashedFilter::make(),
             ])
             ->recordActions([
