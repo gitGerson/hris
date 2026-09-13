@@ -27,6 +27,20 @@
     box-shadow: 0 4px 12px -4px rgb(0 0 0 / 0.15);
 }
 
+/* Groups sit 1.75rem apart (gap-y-7). Their labels are hidden while the sidebar is
+   collapsed, so that spacing reads as unexplained gaps between icons. Tighten it and
+   mark the boundary with a hairline instead. */
+@media (min-width: 1024px) {
+    .fi-sidebar:not(.fi-sidebar-open) .fi-sidebar-nav-groups {
+        row-gap: calc(var(--spacing) * 2);
+    }
+
+    .fi-sidebar:not(.fi-sidebar-open) .fi-sidebar-group + .fi-sidebar-group {
+        border-top: 1px solid rgb(0 0 0 / 0.06);
+        padding-top: calc(var(--spacing) * 2);
+    }
+}
+
 /* Filament sets lg:transition-none on the sidebar, so collapsing snaps on desktop.
    Restore a slide: translate for the fully collapsible mode, width for the rest. */
 @media (min-width: 1024px) {
