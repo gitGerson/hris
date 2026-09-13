@@ -13,3 +13,45 @@
 .custom-auth-form-wrapper {
     @apply max-w-md;
 }
+
+/* Matching hairline + shadow: sidebar on its right edge, topbar on its bottom edge. */
+.fi-main-sidebar {
+    border-inline-end: 1px solid rgb(0 0 0 / 0.05);
+    box-shadow: 4px 0 12px -4px rgb(0 0 0 / 0.15);
+}
+
+/* Overrides Filament's all-around ring, so the hairline sits on the bottom only. */
+.fi-topbar {
+    border-bottom: 1px solid rgb(0 0 0 / 0.05);
+    box-shadow: 0 4px 12px -4px rgb(0 0 0 / 0.15);
+}
+
+/* Filament sets lg:transition-none on the sidebar, so collapsing snaps on desktop.
+   Restore a slide: translate for the fully collapsible mode, width for the rest. */
+@media (min-width: 1024px) {
+    .fi-sidebar {
+        transition-property: translate, width;
+        transition-duration: 300ms;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Open sidebar is sticky (in flow), closed is fixed (out of flow). Position cannot
+       animate, so the content snapped on toggle. Keep it fixed and shift the content
+       with a margin instead, on the same 300ms as the slide. */
+    .fi-body.fi-body-has-sidebar-fully-collapsible-on-desktop
+        .fi-sidebar.fi-sidebar-open {
+        position: fixed;
+    }
+
+    .fi-body.fi-body-has-sidebar-fully-collapsible-on-desktop .fi-main-ctn {
+        margin-inline-start: 0;
+        transition-property: margin-inline-start, opacity;
+        transition-duration: 300ms;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .fi-body.fi-body-has-sidebar-fully-collapsible-on-desktop
+        .fi-main-ctn.fi-main-ctn-sidebar-open {
+        margin-inline-start: var(--sidebar-width);
+    }
+}
