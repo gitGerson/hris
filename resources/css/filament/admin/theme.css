@@ -1,0 +1,14 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+@source '../../../../vendor/diogogpinto/filament-auth-ui-enhancer/resources/**/*.blade.php';
+
+/* Plugin ships lg:px-20 xl:px-36, which squeezes the fields on a narrow form panel. */
+.custom-auth-form-panel {
+    @apply lg:px-8 xl:px-10;
+}
+
+.custom-auth-form-wrapper {
+    @apply max-w-md;
+}

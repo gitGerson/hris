@@ -19,6 +19,7 @@ class UserForm
                     ->email()
                     ->required()
                     ->unique(ignoreRecord: true),
+                // Hashed by the User model cast; blank on edit keeps the current password.
                 TextInput::make('password')
                     ->password()
                     ->revealable()
