@@ -2,31 +2,20 @@
 
 namespace App\Models;
 
-use Database\Factories\DepartmentFactory;
+use Database\Factories\PositionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
-#[Fillable(['company_id', 'code', 'name', 'is_active'])]
-class Department extends Model
+#[Fillable(['department_id', 'code', 'name', 'is_active'])]
+class Position extends Model
 {
-    /** @use HasFactory<DepartmentFactory> */
+    /** @use HasFactory<PositionFactory> */
     use HasFactory, LogsActivity, SoftDeletes;
-
-    /**
-     * Single company install, so a department always belongs to the operating company.
-     */
-    protected static function booted(): void
-    {
-        static::creating(function (Department $department): void {
-            $department->company_id ??= Company::current()->id;
-        });
-    }
 
     /**
      * Master data, so every change is worth an audit trail.
@@ -40,19 +29,11 @@ class Department extends Model
     }
 
     /**
-     * @return BelongsTo<Company, $this>
+     * @return BelongsTo<Department, $this>
      */
-    public function company(): BelongsTo
+    public function department(): BelongsTo
     {
-        return $this->belongsTo(Company::class);
-    }
-
-    /**
-     * @return HasMany<Position, $this>
-     */
-    public function positions(): HasMany
-    {
-        return $this->hasMany(Position::class);
+        return $this->belongsTo(Department::class);
     }
 
     /**
