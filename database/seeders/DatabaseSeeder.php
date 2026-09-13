@@ -23,10 +23,12 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call([
+            RegionSeeder::class,
             CompanySeeder::class,
             DepartmentSeeder::class,
             JobLevelSeeder::class,
             PositionSeeder::class,
+            EmployeeSeeder::class,
         ]);
     }
 }
