@@ -1,58 +1,213 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# HRIS — Rumah Roti
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+An HR information system built on Laravel 13 and Filament 5. It covers the company's
+master data — company profile, branches, departments, positions, job levels and
+employees — with role-based access control, an audit trail, and file storage on
+Cloudflare R2.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Stack
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| Layer | Choice |
+|---|---|
+| Framework | Laravel 13 (PHP 8.4) |
+| Admin panel | Filament 5 |
+| Database | MySQL 8 |
+| Cache & queue | Redis (via `predis/predis`) |
+| Sessions | MySQL — see note below |
+| File storage | Cloudflare R2, served from a custom domain |
+| Frontend build | Vite 8 + Tailwind 4 |
+| Tests | Pest 5 |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Filament plugins
 
-## Learning Laravel
+| Package | Purpose |
+|---|---|
+| `bezhansalleh/filament-shield` | Roles and permissions on top of `spatie/laravel-permission` |
+| `jeffgreco13/filament-breezy` | My Profile page, avatar upload, browser sessions |
+| `pxlrbt/filament-activity-log` | Activity log viewer, backed by `spatie/laravel-activitylog` |
+| `diogogpinto/filament-auth-ui-enhancer` | Split-screen login with rotating background |
+| `fahiem/filament-pinpoint` | Leaflet map picker for branch geofences |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Requirements
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+- PHP **8.4** with the usual Laravel extensions
+- MySQL **8**
+- Redis (cache and queue)
+- Node **22+** and npm
+- Composer 2
 
-## Agentic Development
+Redis needs a PHP client. This project uses **predis** (pure PHP), so the
+`phpredis` extension is *not* required.
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+---
+
+## Setup
 
 ```bash
-composer require laravel/boost --dev
+git clone <repo> hris
+cd hris
 
-php artisan boost:install
+composer install
+npm install
+
+cp .env.example .env
+php artisan key:generate
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Edit `.env` — at minimum the database block, then:
 
-## Contributing
+```bash
+php artisan migrate --seed
+php artisan storage:link
+npm run build
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Create the first admin user and grant it everything:
 
-## Code of Conduct
+```bash
+php artisan make:filament-user
+php artisan shield:generate --all --panel=admin
+php artisan shield:super-admin --user=1 --panel=admin
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Then run the app:
 
-## Security Vulnerabilities
+```bash
+composer dev     # serve + queue listener + vite, all at once
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+The panel lives at `/admin`.
 
-## License
+### Environment notes
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+**Redis** — cache and queue only:
+
+```env
+REDIS_CLIENT=predis
+CACHE_STORE=redis
+QUEUE_CONNECTION=redis
+SESSION_DRIVER=database
+```
+
+`SESSION_DRIVER` stays on `database` deliberately: Breezy's *Browser Sessions*
+feature reads `config('session.table')` and only works with the database driver.
+
+**Cloudflare R2** — the default filesystem:
+
+```env
+FILESYSTEM_DISK=r2
+
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+R2_DEFAULT_REGION=auto
+R2_BUCKET=
+R2_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
+R2_URL=https://cdn.example.com
+R2_USE_PATH_STYLE_ENDPOINT=false
+```
+
+- `R2_ENDPOINT` is the account host **without** the bucket; the bucket goes in `R2_BUCKET`.
+- `R2_URL` must be the public bucket URL or custom domain. The S3 API endpoint is not
+  publicly readable, so without it every `Storage::url()` link fails.
+- `FILESYSTEM_DISK` drives both `filesystems.default` and Filament's
+  `config('filament.default_filesystem_disk')`, so one variable moves the whole app.
+  Set it to `local` to develop without R2.
+- The `s3` disk is kept separate for real AWS and is not used by default.
+
+**Map picker** — `PINPOINT_PROVIDER=leaflet` uses OpenStreetMap and needs no API key.
+
+---
+
+## Data model
+
+```
+Company (single row, edited as a settings page)
+ └── Branch          code, geofence (lat/lng/radius), timezone
+ └── Department      code, name
+      └── Position   code, name
+JobLevel             code, name, rank
+Employee             identity, dual address, placement, employment dates
+ ├── branch_id · department_id · position_id · job_level_id
+ └── identity/domicile → Province · City
+```
+
+Notes on the shape:
+
+- **Single company.** The company is one row edited through *Settings → Company*, not a
+  CRUD resource. `branches.company_id` and `departments.company_id` still exist and are
+  auto-filled from `Company::current()`, so a second entity later is a seeder row rather
+  than a migration.
+- **No repeated foreign keys.** Positions reach the company through their department;
+  employees reach it through their branch. The key is stored once.
+- **Employee numbers** are generated as `RR0001`. The generator is a static method, so
+  seeders can call it directly — model events are suppressed under `WithoutModelEvents`.
+- **Regions** are local tables (38 provinces, 514 cities) seeded from
+  [wilayah.id](https://wilayah.id) and cached to `database/data/regions.json`, so seeding
+  works offline after the first run.
+- **Soft deletes** on all master data; history is never hard-deleted.
+
+### Seeded data
+
+`php artisan migrate --seed` gives you: the Rumah Roti company and its head office
+branch, 6 departments, 14 positions, a 6-rung job level ladder, 8 employees, and the
+full Indonesian region tables. Every seeder is idempotent — re-running updates rather
+than duplicating.
+
+---
+
+## Conventions
+
+Project rules live in [`.ai/rules/`](.ai/rules/) and are indexed by file glob. Read the
+matching rule file before editing:
+
+| Applies to | Rule |
+|---|---|
+| `app/Filament/**` | File uploads target R2; never call `->visibility()` |
+| `app/Filament/Resources/**/Tables/**` | Table pattern: session persistence, icon-only row actions |
+
+Two that bite if ignored:
+
+- **Never chain `->visibility('public')` on a `FileUpload`.** R2 has no S3 ACLs, so the
+  call fails — and Filament wraps it in `rescue(..., report: false)`, so it fails
+  *silently* and looks fine.
+- **State toggles belong in the table, not the form**, as an action with
+  `->requiresConfirmation()`. `ToggleColumn` cannot confirm; `requiresConfirmation()`
+  only exists on actions.
+
+### Audit trail
+
+Master data models log changes via `spatie/laravel-activitylog`. `Employee` deliberately
+excludes `national_id`, `phone` and both addresses from the log — identity data should
+not end up in an audit table.
+
+---
+
+## Commands
+
+```bash
+composer dev                  # serve + queue + vite
+php artisan test --compact    # run the suite
+vendor/bin/pint --dirty       # format changed files
+
+php artisan migrate:fresh --seed          # rebuild the database
+php artisan shield:generate --all --panel=admin   # regenerate permissions after adding a resource
+```
+
+After adding a Filament resource, run `shield:generate` or the new resource will have no
+permissions and will be invisible to non-super-admins.
+
+---
+
+## Roadmap
+
+Master data is complete. The modules it was built to support are not yet started:
+
+- **Attendance** — branches already carry timezone, coordinates and a geofence radius;
+  employees carry an optional fingerprint ID
+- **Payroll** — job levels are ranked for salary banding; `marital_status` is stored for
+  PTKP
+- **Leave** — `join_date` is in place for entitlement accrual
