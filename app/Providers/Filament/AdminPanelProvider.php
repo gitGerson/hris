@@ -105,12 +105,11 @@ class AdminPanelProvider extends PanelProvider
                         shouldRegisterNavigation: false,
                         hasAvatars: true,
                     )
-                    // FILESYSTEM_DISK is local, which is not web accessible, so pin uploads
-                    // to the public disk that the storage symlink serves.
+                    // Uploads go to R2 and are served from the custom domain in R2_URL.
+                    // No visibility call: R2 has no S3 ACLs, so PutObjectAcl fails there.
                     ->avatarUploadComponent(fn (FileUpload $fileUpload): FileUpload => $fileUpload
-                        ->disk('public')
+                        ->disk('r2')
                         ->directory('avatars')
-                        ->visibility('public')
                         ->avatar()
                         ->imageEditor())
                     ->enableBrowserSessions(),

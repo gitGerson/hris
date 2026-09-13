@@ -60,6 +60,27 @@ return [
             'report' => false,
         ],
 
+        /*
+         * Cloudflare R2 speaks the S3 API, so it uses the same driver with its own
+         * credentials. Kept separate from the s3 disk above so both stay usable.
+         *
+         * region is always 'auto': R2 has no regions, but the AWS SDK requires the key.
+         * use_path_style_endpoint stays false: R2 serves virtual-host style URLs.
+         * R2_URL is the public bucket or custom domain, needed for Storage::url().
+         */
+        'r2' => [
+            'driver' => 's3',
+            'key' => env('R2_ACCESS_KEY_ID'),
+            'secret' => env('R2_SECRET_ACCESS_KEY'),
+            'region' => env('R2_DEFAULT_REGION', 'auto'),
+            'bucket' => env('R2_BUCKET'),
+            'url' => env('R2_URL'),
+            'endpoint' => env('R2_ENDPOINT'),
+            'use_path_style_endpoint' => env('R2_USE_PATH_STYLE_ENDPOINT', false),
+            'throw' => false,
+            'report' => false,
+        ],
+
     ],
 
     /*

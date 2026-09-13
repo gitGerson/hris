@@ -123,7 +123,7 @@ class CompanyProfile extends Page
                     ->schema([
                         ImageEntry::make('logo_path')
                             ->label('Logo')
-                            ->disk('public')
+                            ->disk('r2')
                             ->placeholder('No logo uploaded'),
                     ]),
             ]);
@@ -193,13 +193,13 @@ class CompanyProfile extends Page
                 ]),
             Section::make('Branding')
                 ->schema([
+                    /** R2 has no S3 ACLs, so no visibility call: the custom domain serves it. */
                     FileUpload::make('logo_path')
                         ->label('Logo')
                         ->image()
                         ->imageEditor()
-                        ->disk('public')
-                        ->directory('companies')
-                        ->visibility('public'),
+                        ->disk('r2')
+                        ->directory('companies'),
                 ]),
         ];
     }

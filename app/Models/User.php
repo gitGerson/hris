@@ -24,11 +24,11 @@ class User extends Authenticatable implements HasAvatar
     use CausesActivity, HasFactory, HasRoles, LogsActivity, Notifiable;
 
     /**
-     * Avatar uploads live on the public disk, so they resolve through the storage symlink.
+     * Avatars live on R2 and resolve through the custom domain set in R2_URL.
      */
     public function getFilamentAvatarUrl(): ?string
     {
-        return $this->avatar_url ? Storage::disk('public')->url($this->avatar_url) : null;
+        return $this->avatar_url ? Storage::disk('r2')->url($this->avatar_url) : null;
     }
 
     /**
