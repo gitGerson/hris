@@ -7,6 +7,7 @@ use App\Services\AuthBackgroundImageService;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use DiogoGPinto\AuthUIEnhancer\AuthUIEnhancerPlugin;
 use Filament\Enums\ThemeMode;
+use Filament\Forms\Components\FileUpload;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -24,6 +25,7 @@ use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Jeffgreco13\FilamentBreezy\BreezyCore;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -78,6 +80,22 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->plugins([
                 FilamentShieldPlugin::make(),
+                // Profile page in the user menu, with avatar upload and session management.
+                BreezyCore::make()
+                    ->myProfile(
+                        shouldRegisterUserMenu: true,
+                        shouldRegisterNavigation: false,
+                        hasAvatars: true,
+                    )
+                    // FILESYSTEM_DISK is local, which is not web accessible, so pin uploads
+                    // to the public disk that the storage symlink serves.
+                    ->avatarUploadComponent(fn (FileUpload $fileUpload): FileUpload => $fileUpload
+                        ->disk('public')
+                        ->directory('avatars')
+                        ->visibility('public')
+                        ->avatar()
+                        ->imageEditor())
+                    ->enableBrowserSessions(),
                 // 35% width needs the padding override in resources/css/filament/admin/theme.css.
                 AuthUIEnhancerPlugin::make()
                     ->formPanelPosition('right')
