@@ -45,6 +45,9 @@ class AdminPanelProvider extends PanelProvider
             // Custom page: appends the app name to the sign in heading.
             ->login(Login::class)
             ->brandName('HRIS')
+            ->favicon(asset('image/logo/1.png'))
+            // Custom family, so Filament serves it through Bunny, the same host Vite uses.
+            ->font('Plus Jakarta Sans')
             // View renders the mark, plus the "HRIS" text outside the auth pages.
             ->brandLogo(fn (): View => view('filament.logo', [
                 'height' => $this->logoHeight(),
