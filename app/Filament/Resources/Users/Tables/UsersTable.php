@@ -16,10 +16,12 @@ class UsersTable
         return $table
             ->columns([
                 TextColumn::make('name')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('email')
                     ->label('Email address')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('roles.name')
                     ->label('Roles')
                     ->badge(),
@@ -32,12 +34,24 @@ class UsersTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('name')
+            /** Keep the user's view between visits. */
+            ->persistFiltersInSession()
+            ->persistSearchInSession()
+            ->persistSortInSession()
+            ->persistColumnsInSession()
             ->filters([
                 //
             ])
             ->recordActions([
-                ViewAction::make(),
-                EditAction::make(),
+                ViewAction::make()
+                    ->iconButton()
+                    ->tooltip('View')
+                    ->color('info'),
+                EditAction::make()
+                    ->iconButton()
+                    ->tooltip('Edit')
+                    ->color('warning'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

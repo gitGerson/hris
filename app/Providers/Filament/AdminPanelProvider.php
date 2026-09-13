@@ -82,7 +82,10 @@ class AdminPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->plugins([
-                FilamentShieldPlugin::make(),
+                // Roles sit with Users under Settings; the resource reads nav off the plugin.
+                FilamentShieldPlugin::make()
+                    ->navigationGroup('Settings')
+                    ->navigationSort(3),
                 // Profile page in the user menu, with avatar upload and session management.
                 BreezyCore::make()
                     ->myProfile(
