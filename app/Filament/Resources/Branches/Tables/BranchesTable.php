@@ -2,13 +2,16 @@
 
 namespace App\Filament\Resources\Branches\Tables;
 
+use App\Models\Branch;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
-use Filament\Tables\Columns\IconColumn;
+use Filament\Notifications\Notification;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
@@ -44,9 +47,11 @@ class BranchesTable
                     ->date()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                IconColumn::make('is_active')
-                    ->label('Active')
-                    ->boolean(),
+                TextColumn::make('is_active')
+                    ->label('Status')
+                    ->badge()
+                    ->formatStateUsing(fn (bool $state): string => $state ? 'Active' : 'Inactive')
+                    ->color(fn (bool $state): string => $state ? 'success' : 'danger'),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -66,12 +71,38 @@ class BranchesTable
                         'production' => 'Production',
                     ]),
                 TernaryFilter::make('is_active')
-                    ->label('Active'),
+                    ->label('Status'),
                 TrashedFilter::make(),
             ])
             ->recordActions([
-                ViewAction::make(),
-                EditAction::make(),
+                /** Toggling here instead of the form, so it always asks first. */
+                Action::make('toggleActive')
+                    ->iconButton()
+                    ->icon(Heroicon::OutlinedPower)
+                    ->tooltip(fn (Branch $record): string => $record->is_active ? 'Deactivate' : 'Activate')
+                    ->color(fn (Branch $record): string => $record->is_active ? 'danger' : 'success')
+                    ->requiresConfirmation()
+                    ->modalHeading(fn (Branch $record): string => ($record->is_active ? 'Deactivate ' : 'Activate ').$record->name)
+                    ->modalDescription(fn (Branch $record): string => $record->is_active
+                        ? 'Staff will no longer be able to clock in at this branch. Existing records are kept.'
+                        : 'This branch will accept clock-ins again.')
+                    ->modalSubmitActionLabel('Confirm')
+                    ->action(function (Branch $record): void {
+                        $record->update(['is_active' => ! $record->is_active]);
+
+                        Notification::make()
+                            ->success()
+                            ->title($record->is_active ? 'Branch activated' : 'Branch deactivated')
+                            ->send();
+                    }),
+                ViewAction::make()
+                    ->iconButton()
+                    ->tooltip('View')
+                    ->color('info'),
+                EditAction::make()
+                    ->iconButton()
+                    ->tooltip('Edit')
+                    ->color('warning'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
