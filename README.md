@@ -13,9 +13,9 @@ Cloudflare R2.
 |---|---|
 | Framework | Laravel 13 (PHP 8.4) |
 | Admin panel | Filament 5 |
-| Database | MySQL 8 |
+| Database | PostgreSQL |
 | Cache & queue | Redis (via `predis/predis`) |
-| Sessions | MySQL — see note below |
+| Sessions | PostgreSQL — see note below |
 | File storage | Cloudflare R2, served from a custom domain |
 | Frontend build | Vite 8 + Tailwind 4 |
 | Tests | Pest 5 |
@@ -34,8 +34,8 @@ Cloudflare R2.
 
 ## Requirements
 
-- PHP **8.4** with the usual Laravel extensions
-- MySQL **8**
+- PHP **8.4** with the usual Laravel extensions and `pdo_pgsql`
+- PostgreSQL on port **5432**
 - Redis (cache and queue)
 - Node **22+** and npm
 - Composer 2
@@ -58,7 +58,7 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-Edit `.env` — at minimum the database block, then:
+Create your PostgreSQL database first, then edit `.env` with its credentials (the defaults are `DB_CONNECTION=pgsql`, `DB_HOST=127.0.0.1`, `DB_PORT=5432`, and `DB_USERNAME=postgres`). Set `DB_DATABASE` and `DB_PASSWORD` for your local server, then:
 
 ```bash
 php artisan migrate --seed
@@ -100,6 +100,7 @@ feature reads `config('session.table')` and only works with the database driver.
 
 ```env
 FILESYSTEM_DISK=r2
+LIVEWIRE_TEMPORARY_FILE_UPLOAD_DISK=local
 
 R2_ACCESS_KEY_ID=
 R2_SECRET_ACCESS_KEY=
@@ -117,6 +118,31 @@ R2_USE_PATH_STYLE_ENDPOINT=false
   `config('filament.default_filesystem_disk')`, so one variable moves the whole app.
   Set it to `local` to develop without R2.
 - The `s3` disk is kept separate for real AWS and is not used by default.
+- Livewire stages uploads on the private `local` disk, then Laravel saves the final
+  files to R2. This avoids browser-to-R2 CORS preflight requests for temporary uploads.
+
+Saved file previews still fetch from R2 in the browser. In Cloudflare, open
+**R2 → your bucket → Settings → CORS policy** and add this rule to the existing
+policy (preserve rules used by other applications):
+
+```json
+[
+  {
+    "AllowedOrigins": ["http://hris.test"],
+    "AllowedMethods": ["GET", "HEAD"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
+
+Add the exact production origin when deploying. CORS does not make private objects
+public; Filament's signed preview URLs still authorize access. After saving, reload
+the profile page with browser caching disabled and confirm the avatar response has
+`Access-Control-Allow-Origin: http://hris.test`.
+
+See [Cloudflare's R2 CORS documentation](https://developers.cloudflare.com/r2/buckets/cors/).
 
 **Map picker** — `PINPOINT_PROVIDER=leaflet` uses OpenStreetMap and needs no API key.
 
