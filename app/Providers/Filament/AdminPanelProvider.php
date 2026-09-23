@@ -38,8 +38,8 @@ class AdminPanelProvider extends PanelProvider
     {
         return $panel
             ->default()
-            ->id('admin')
-            ->path('admin')
+            ->id('')
+            ->path('')
             ->viteTheme('resources/css/filament/admin/theme.css')
             // Light only, no theme switcher.
             ->darkMode(false)
